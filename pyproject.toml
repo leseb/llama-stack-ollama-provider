@@ -1,14 +1,14 @@
 [project]
-name = "llama-stack-ollama-provider"
+dependencies = ["llama-stack", "pydantic", "aiohttp", "ollama"]
+
+name = "llama-stack-provider-ollama"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.9"
-dependencies = []
-
+requires-python = ">=3.10"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-packages = ["src/llama_stack_ollama_provider"]
+packages = ["src/llama_stack_provider_ollama"]
