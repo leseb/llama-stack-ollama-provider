@@ -57,9 +57,8 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
     request_has_media,
 )
 
-from config import OllamaImplConfig
-
-from models import model_entries
+from .config import OllamaImplConfig
+from .models import model_entries
 
 logger = get_logger(name=__name__, category="inference")
 
@@ -176,7 +175,9 @@ class OllamaInferenceAdapter(Inference, ModelsProtocolPrivate):
         else:
             return await self._nonstream_chat_completion(request)
 
-    async def _get_params(self, request: Union[ChatCompletionRequest, CompletionRequest]) -> dict:
+    async def _get_params(
+        self, request: Union[ChatCompletionRequest, CompletionRequest]
+    ) -> dict:
         sampling_options = get_sampling_options(request.sampling_params)
         # This is needed since the Ollama API expects num_predict to be set
         # for early truncation instead of max_tokens.
@@ -188,9 +189,14 @@ class OllamaInferenceAdapter(Inference, ModelsProtocolPrivate):
         llama_model = self.register_helper.get_llama_model(request.model)
         if isinstance(request, ChatCompletionRequest):
             if media_present or not llama_model:
-                contents = [await convert_message_to_openai_dict_for_ollama(m) for m in request.messages]
+                contents = [
+                    await convert_message_to_openai_dict_for_ollama(m)
+                    for m in request.messages
+                ]
                 # flatten the list of lists
-                input_dict["messages"] = [item for sublist in contents for item in sublist]
+                input_dict["messages"] = [
+                    item for sublist in contents for item in sublist
+                ]
             else:
                 input_dict["raw"] = True
                 input_dict["prompt"] = await chat_completion_request_to_prompt(
@@ -198,7 +204,9 @@ class OllamaInferenceAdapter(Inference, ModelsProtocolPrivate):
                     llama_model,
                 )
         else:
-            assert not media_present, "Ollama does not support media for Completion requests"
+            assert not media_present, (
+                "Ollama does not support media for Completion requests"
+            )
             input_dict["prompt"] = await completion_request_to_prompt(request)
             input_dict["raw"] = True
 
@@ -220,7 +228,9 @@ class OllamaInferenceAdapter(Inference, ModelsProtocolPrivate):
 
         return params
 
-    async def _nonstream_chat_completion(self, request: ChatCompletionRequest) -> ChatCompletionResponse:
+    async def _nonstream_chat_completion(
+        self, request: ChatCompletionRequest
+    ) -> ChatCompletionResponse:
         params = await self._get_params(request)
         if "messages" in params:
             r = await self.client.chat(**params)
@@ -242,7 +252,9 @@ class OllamaInferenceAdapter(Inference, ModelsProtocolPrivate):
         )
         return process_chat_completion_response(response, request)
 
-    async def _stream_chat_completion(self, request: ChatCompletionRequest) -> AsyncGenerator:
+    async def _stream_chat_completion(
+        self, request: ChatCompletionRequest
+    ) -> AsyncGenerator:
         params = await self._get_params(request)
 
         async def _generate_and_convert_to_openai_compat():
@@ -293,7 +305,9 @@ class OllamaInferenceAdapter(Inference, ModelsProtocolPrivate):
     async def register_model(self, model: Model) -> Model:
         model = await self.register_helper.register_model(model)
         if model.model_type == ModelType.embedding:
-            logger.info(f"Pulling embedding model `{model.provider_resource_id}` if necessary...")
+            logger.info(
+                f"Pulling embedding model `{model.provider_resource_id}` if necessary..."
+            )
             await self.client.pull(model.provider_resource_id)
             response = await self.client.list()
         else:
@@ -312,7 +326,11 @@ async def convert_message_to_openai_dict_for_ollama(message: Message) -> List[di
         if isinstance(content, ImageContentItem):
             return {
                 "role": message.role,
-                "images": [await convert_image_content_to_url(content, download=True, include_format=False)],
+                "images": [
+                    await convert_image_content_to_url(
+                        content, download=True, include_format=False
+                    )
+                ],
             }
         else:
             text = content.text if isinstance(content, TextContentItem) else content
